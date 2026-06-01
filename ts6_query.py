@@ -173,16 +173,20 @@ class Ts6WebQueryClient:
                 raw = response.read().decode("utf-8", errors="replace")
         except HTTPError as exc:  # pragma: no cover - network dependent
             detail = exc.read().decode("utf-8", errors="replace")
-            raise Ts6QueryError(f"WebQuery HTTP {exc.code}: {detail or exc.reason}") from exc
+            raise Ts6QueryError(
+                f"{command} 请求失败：WebQuery HTTP {exc.code}: {detail or exc.reason}"
+            ) from exc
         except URLError as exc:  # pragma: no cover - network dependent
-            raise Ts6QueryError(f"无法连接到 WebQuery：{self.base_url} ({exc.reason})") from exc
+            raise Ts6QueryError(
+                f"{command} 请求失败：无法连接到 WebQuery：{url} ({exc.reason})"
+            ) from exc
         except http.client.RemoteDisconnected as exc:  # pragma: no cover - network dependent
             raise Ts6QueryError(
-                "WebQuery 连接被服务器直接断开。请检查 webquery_scheme/webquery_port "
-                "是否指向 TS6 HTTP/HTTPS Query 端口，而不是语音端口 9987 或 SSH Query 端口 10022。"
+                f"{command} 请求失败：WebQuery 连接被服务器直接断开，URL={url}。"
+                "请检查该命令是否能在 AstrBot 服务器上用 curl 单独访问。"
             ) from exc
         except Exception as exc:  # pragma: no cover - network dependent
-            raise Ts6QueryError(f"WebQuery 请求失败：{exc}") from exc
+            raise Ts6QueryError(f"{command} 请求失败：WebQuery 请求异常：{exc}") from exc
 
         try:
             payload = json.loads(raw)
