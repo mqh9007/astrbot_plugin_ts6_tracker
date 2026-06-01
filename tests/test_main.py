@@ -338,7 +338,7 @@ class Ts6TrackerPluginTests(unittest.TestCase):
             [
                 ("serverinfo", ()),
                 ("channellist", ()),
-                ("clientlist", ("uid", "away", "ip")),
+                ("clientlist", ()),
             ],
         )
 

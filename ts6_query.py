@@ -76,7 +76,7 @@ class Ts6WebQueryClient:
     async def fetch_status(self) -> Ts6ServerStatus:
         serverinfo_records = await self._execute("serverinfo")
         channel_records = await self._execute("channellist")
-        client_records = await self._execute("clientlist", options=["uid", "away", "ip"])
+        client_records = await self._execute("clientlist")
 
         client_details: dict[str, dict[str, str]] = {}
         for client in client_records:
@@ -107,14 +107,14 @@ class Ts6WebQueryClient:
             detail = client_details.get(client.get("clid", ""), {})
             users.append(
                 Ts6OnlineUser(
-                    nickname=client.get("client_nickname", ""),
-                    channel_name=channels.get(client.get("cid", ""), ""),
-                    client_id=client.get("clid", ""),
-                    database_id=client.get("client_database_id", ""),
-                    unique_id=client.get("client_unique_identifier", ""),
-                    client_ip=client.get("connection_client_ip", ""),
+                    nickname=_first_value(client, detail, "client_nickname"),
+                    channel_name=channels.get(client.get("cid", "") or detail.get("cid", ""), ""),
+                    client_id=_first_value(client, detail, "clid"),
+                    database_id=_first_value(client, detail, "client_database_id"),
+                    unique_id=_first_value(client, detail, "client_unique_identifier"),
+                    client_ip=_first_value(client, detail, "connection_client_ip"),
                     connected_duration_seconds=_parse_connected_duration(detail),
-                    away=client.get("client_away", "0") == "1",
+                    away=_first_value(client, detail, "client_away") == "1",
                 )
             )
 
@@ -242,6 +242,10 @@ class Ts6WebQueryClient:
 def _parse_connected_duration(detail: dict[str, str]) -> int:
     value = detail.get("connection_connected_time", "0") or "0"
     return max(0, _safe_int(value, 0) // 1000)
+
+
+def _first_value(primary: dict[str, str], secondary: dict[str, str], key: str) -> str:
+    return primary.get(key, "") or secondary.get(key, "")
 
 
 def _safe_int(value: object, default: int) -> int:
