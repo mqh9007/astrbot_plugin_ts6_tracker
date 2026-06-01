@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import http.client
 import json
 import ssl
 from dataclasses import asdict, dataclass
@@ -177,6 +178,11 @@ class Ts6WebQueryClient:
             raise Ts6QueryError(f"WebQuery HTTP {exc.code}: {detail or exc.reason}") from exc
         except URLError as exc:  # pragma: no cover - network dependent
             raise Ts6QueryError(f"无法连接到 WebQuery：{self.base_url} ({exc.reason})") from exc
+        except http.client.RemoteDisconnected as exc:  # pragma: no cover - network dependent
+            raise Ts6QueryError(
+                "WebQuery 连接被服务器直接断开。请检查 webquery_scheme/webquery_port "
+                "是否指向 TS6 HTTP/HTTPS Query 端口，而不是语音端口 9987 或 SSH Query 端口 10022。"
+            ) from exc
         except Exception as exc:  # pragma: no cover - network dependent
             raise Ts6QueryError(f"WebQuery 请求失败：{exc}") from exc
 
