@@ -48,7 +48,7 @@ PLUGIN_NAME = "astrbot_plugin_ts6_tracker"
     "ts6_tracker",
     "mqh",
     "拥有 TeamSpeak 6 在线状态查询、频道成员展示、上下线通知的功能。",
-    "1.0.4",
+    "1.0.5",
     "",
 )
 class Ts6TrackerPlugin(Star):
@@ -385,6 +385,7 @@ class Ts6TrackerPlugin(Star):
             api_key=api_key,
             scheme=scheme,
             verify_tls=self._verify_tls(),
+            fetch_client_details=self._fetch_client_details_enabled(),
             timeout=10.0,
             debug=self._debug_enabled(),
         )
@@ -503,6 +504,9 @@ class Ts6TrackerPlugin(Star):
 
     def _verify_tls(self) -> bool:
         return self._get_bool_config("verify_tls", True)
+
+    def _fetch_client_details_enabled(self) -> bool:
+        return self._get_bool_config("fetch_client_details", False)
 
     def _online_notify_template(self) -> str:
         return str(
