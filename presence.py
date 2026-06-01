@@ -67,7 +67,11 @@ class PresenceTracker:
             key: SessionRecord.from_dict(value)
             for key, value in self.storage.load_active_sessions(server_key).items()
         }
-        current_users = {session_key(user): user for user in status.users}
+        current_users = {
+            key: user
+            for user in status.users
+            if (key := session_key(user))
+        }
         online_names = [user.nickname for user in status.users]
 
         if not self.storage.is_baseline_initialized(server_key):

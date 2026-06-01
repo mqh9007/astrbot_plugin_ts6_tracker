@@ -2,7 +2,7 @@ name: astrbot_plugin_ts6_tracker
 display_name: TeamSpeak 6 查询监控通知插件
 author: mqh
 description: 拥有 TeamSpeak 6 在线状态查询、频道成员展示、上下线通知的功能。
-version: 1.0.8
+version: 1.0.9
 repo: "https://github.com/mqh9007/astrbot_plugin_ts6_tracker"
 astrbot_version: ">=4.16,<5"
 support_platforms:

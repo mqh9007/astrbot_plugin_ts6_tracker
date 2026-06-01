@@ -89,6 +89,7 @@ def _install_astrbot_stubs() -> None:
 _install_astrbot_stubs()
 plugin_module = importlib.import_module("main")
 notifications_module = importlib.import_module("notifications")
+presence_module = importlib.import_module("presence")
 query_module = importlib.import_module("ts6_query")
 
 
@@ -440,6 +441,49 @@ class Ts6TrackerPluginTests(unittest.TestCase):
 
         self.assertEqual(status.online_count, 1)
         self.assertEqual(status.users[0].nickname, "tester")
+
+    def test_presence_tracker_ignores_users_without_session_key(self):
+        class PresenceStorage:
+            def __init__(self):
+                self.sessions = {}
+                self.baseline = False
+
+            def load_active_sessions(self, server_key):
+                return self.sessions
+
+            def is_baseline_initialized(self, server_key):
+                return self.baseline
+
+            def set_baseline_initialized(self, server_key, initialized):
+                self.baseline = initialized
+
+            def replace_active_sessions(self, server_key, sessions):
+                self.sessions = {session["key"]: session for session in sessions}
+
+            def record_session_history(self, server_key, session, offline_detected_at):
+                return None
+
+        storage = PresenceStorage()
+        tracker = presence_module.PresenceTracker(storage)
+        status = SimpleNamespace(
+            server_host="127.0.0.1",
+            server_port=9987,
+            users=[
+                SimpleNamespace(
+                    unique_id="",
+                    database_id="",
+                    client_id="",
+                    nickname="",
+                    channel_name="大厅",
+                    client_ip="",
+                )
+            ],
+        )
+
+        events = tracker.reconcile(status, 100)
+
+        self.assertEqual(events, [])
+        self.assertEqual(storage.sessions, {})
 
 
 if __name__ == "__main__":

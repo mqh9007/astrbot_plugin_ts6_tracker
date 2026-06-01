@@ -48,7 +48,7 @@ PLUGIN_NAME = "astrbot_plugin_ts6_tracker"
     "ts6_tracker",
     "mqh",
     "拥有 TeamSpeak 6 在线状态查询、频道成员展示、上下线通知的功能。",
-    "1.0.8",
+    "1.0.9",
     "",
 )
 class Ts6TrackerPlugin(Star):
@@ -228,6 +228,31 @@ class Ts6TrackerPlugin(Star):
             return
         yield event.plain_result(message)
 
+    @filter.permission_type(filter.PermissionType.ADMIN)
+    @filter.command("tsmonitor", alias={"ts监控状态"})
+    async def query_monitor_status(self, event: AstrMessageEvent):
+        """查看 TS6 监听任务状态。"""
+        self._ensure_monitor_task()
+        if not self._is_group_event_allowed(event):
+            return
+        if not self._claim_message(event):
+            return
+        event.stop_event()
+
+        targets = self.storage.load_notify_targets()
+        task_alive = bool(self.monitor_task and not self.monitor_task.done())
+        message = (
+            f"TS6 监听配置：{'开启' if self._monitor_enabled() else '关闭'}\n"
+            f"监听任务：{'运行中' if task_alive else '未运行'}\n"
+            f"轮询间隔：{self._monitor_interval_seconds()} 秒\n"
+            f"已绑定通知会话数：{len(targets)}\n"
+            f"当前会话通知："
+            f"{'已绑定' if self.storage.is_notify_target_enabled(getattr(event, 'unified_msg_origin', '')) else '未绑定'}"
+        )
+        if await self._send_text_response(event, message):
+            return
+        yield event.plain_result(message)
+
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def query_ts_status_plain(self, event: AstrMessageEvent):
         """在启用无前缀触发时，响应 ts 和 tsserver 相关指令。"""
@@ -318,6 +343,12 @@ class Ts6TrackerPlugin(Star):
                     continue
 
                 events = self.presence_tracker.reconcile(status, time.time())
+                self._debug_log(
+                    "Monitor poll completed: online=%s events=%s targets=%s",
+                    status.online_count,
+                    len(events),
+                    len(self.storage.load_notify_targets()),
+                )
                 if events:
                     await self._dispatch_presence_events(events)
             except asyncio.CancelledError:
