@@ -49,13 +49,13 @@
   "show_online_duration_in_status": {
     "type": "bool",
     "description": "上号查询时显示在线时长",
-    "hint": "开启后，/ts、上号、人呢 的返回结果会显示为 test(23分钟) 这种格式；若 TS6 不返回真实时长，会使用本地估算时长",
+    "hint": "开启后，/ts、上号、人呢 的返回结果会显示为 test(23分钟) 这种格式；时长只来自 TS6 原生 WebQuery 返回值",
     "default": false
   },
-  "enable_local_duration_estimate": {
+  "fetch_client_times": {
     "type": "bool",
-    "description": "启用本地在线时长估算",
-    "hint": "TS6 WebQuery 不返回在线时长时，插件会从第一次看到用户在线开始计时。该时长可能晚于真实进服时间，但不依赖 clientinfo。",
+    "description": "通过 TS 原生 clientlist -times 获取在线时长",
+    "hint": "开启后会请求 clientlist?-times，并只使用 TS6 返回的原生在线时长字段；不会做本地估算。",
     "default": true
   },
   "fetch_client_details": {

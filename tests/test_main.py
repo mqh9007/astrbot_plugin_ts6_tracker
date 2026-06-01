@@ -110,17 +110,6 @@ def _make_event(group_id=None):
     )
 
 
-class MemoryStorage:
-    def __init__(self):
-        self.meta = {}
-
-    def get_meta(self, key, default=None):
-        return self.meta.get(key, default)
-
-    def set_meta(self, key, value):
-        self.meta[key] = value
-
-
 class Ts6TrackerPluginTests(unittest.TestCase):
     def test_status_message_without_duration_toggle(self):
         plugin = _make_plugin({"show_online_duration_in_status": False})
@@ -349,7 +338,7 @@ class Ts6TrackerPluginTests(unittest.TestCase):
             [
                 ("serverinfo", ()),
                 ("channellist", ()),
-                ("clientlist", ()),
+                ("clientlist", ("times",)),
             ],
         )
 
@@ -451,53 +440,6 @@ class Ts6TrackerPluginTests(unittest.TestCase):
 
         self.assertEqual(status.online_count, 1)
         self.assertEqual(status.users[0].nickname, "tester")
-
-    def test_local_duration_estimate_updates_zero_duration_users(self):
-        plugin = _make_plugin({"enable_local_duration_estimate": True})
-        plugin.storage = MemoryStorage()
-        user = SimpleNamespace(
-            unique_id="",
-            database_id="",
-            client_id="351",
-            nickname="tester",
-            connected_duration_seconds=0,
-        )
-        status = SimpleNamespace(
-            server_host="127.0.0.1",
-            server_port=9987,
-            users=[user],
-        )
-        original_time = plugin_module.time.time
-        try:
-            plugin_module.time.time = lambda: 100
-            plugin._apply_local_duration_estimates(status)
-            self.assertEqual(user.connected_duration_seconds, 0)
-
-            plugin_module.time.time = lambda: 160
-            plugin._apply_local_duration_estimates(status)
-            self.assertEqual(user.connected_duration_seconds, 60)
-        finally:
-            plugin_module.time.time = original_time
-
-    def test_local_duration_estimate_preserves_server_duration(self):
-        plugin = _make_plugin({"enable_local_duration_estimate": True})
-        plugin.storage = MemoryStorage()
-        user = SimpleNamespace(
-            unique_id="",
-            database_id="",
-            client_id="351",
-            nickname="tester",
-            connected_duration_seconds=1380,
-        )
-        status = SimpleNamespace(
-            server_host="127.0.0.1",
-            server_port=9987,
-            users=[user],
-        )
-
-        plugin._apply_local_duration_estimates(status)
-
-        self.assertEqual(user.connected_duration_seconds, 1380)
 
 
 if __name__ == "__main__":

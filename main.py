@@ -21,7 +21,7 @@ try:
         build_online_message,
         format_duration,
     )
-    from .presence import PresenceTracker, build_server_key, session_key
+    from .presence import PresenceTracker
     from .storage import PluginLocalStorage
     from .ts6_query import Ts6QueryError, Ts6WebQueryClient
 except ImportError:
@@ -36,7 +36,7 @@ except ImportError:
         build_online_message,
         format_duration,
     )
-    from presence import PresenceTracker, build_server_key, session_key
+    from presence import PresenceTracker
     from storage import PluginLocalStorage
     from ts6_query import Ts6QueryError, Ts6WebQueryClient
 
@@ -48,7 +48,7 @@ PLUGIN_NAME = "astrbot_plugin_ts6_tracker"
     "ts6_tracker",
     "mqh",
     "拥有 TeamSpeak 6 在线状态查询、频道成员展示、上下线通知的功能。",
-    "1.0.7",
+    "1.0.8",
     "",
 )
 class Ts6TrackerPlugin(Star):
@@ -385,6 +385,7 @@ class Ts6TrackerPlugin(Star):
             api_key=api_key,
             scheme=scheme,
             verify_tls=self._verify_tls(),
+            fetch_client_times=self._fetch_client_times_enabled(),
             fetch_client_details=self._fetch_client_details_enabled(),
             timeout=10.0,
             debug=self._debug_enabled(),
@@ -407,43 +408,9 @@ class Ts6TrackerPlugin(Star):
             logger.exception("Unexpected TS6 query error: %s", exc)
             return "TS6 查询失败：发生了未预期的错误，请打开 debug 后查看日志。"
 
-        self._apply_local_duration_estimates(status)
         self.storage.save_last_status(status.to_dict())
         self._debug_log("TS6 query succeeded with %s online clients", status.online_count)
         return status
-
-    def _apply_local_duration_estimates(self, status) -> None:
-        if not self._local_duration_estimate_enabled():
-            return
-
-        now = int(time.time())
-        server_key = build_server_key(status.server_host, status.server_port)
-        meta_key = f"local_duration_sessions:{server_key}"
-        previous = self.storage.get_meta(meta_key, {})
-        if not isinstance(previous, dict):
-            previous = {}
-
-        next_sessions: dict[str, dict[str, int | str]] = {}
-        for user in status.users:
-            key = session_key(user)
-            if not key:
-                continue
-
-            current_duration = int(getattr(user, "connected_duration_seconds", 0) or 0)
-            previous_record = previous.get(key, {}) if isinstance(previous.get(key), dict) else {}
-            if current_duration > 0:
-                start_ts = now - current_duration
-            else:
-                start_ts = int(previous_record.get("start_ts", now) or now)
-                user.connected_duration_seconds = max(0, now - start_ts)
-
-            next_sessions[key] = {
-                "start_ts": start_ts,
-                "last_seen_ts": now,
-                "nickname": str(getattr(user, "nickname", "") or ""),
-            }
-
-        self.storage.set_meta(meta_key, next_sessions)
 
     def _group_users_by_channel(
         self,
@@ -563,8 +530,8 @@ class Ts6TrackerPlugin(Star):
     def _show_status_online_duration(self) -> bool:
         return self._get_bool_config("show_online_duration_in_status", False)
 
-    def _local_duration_estimate_enabled(self) -> bool:
-        return self._get_bool_config("enable_local_duration_estimate", True)
+    def _fetch_client_times_enabled(self) -> bool:
+        return self._get_bool_config("fetch_client_times", True)
 
     def _group_whitelist_enabled(self) -> bool:
         return self._get_bool_config("enable_group_whitelist", False)

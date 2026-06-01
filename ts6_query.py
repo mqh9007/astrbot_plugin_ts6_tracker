@@ -61,6 +61,7 @@ class Ts6WebQueryClient:
         server_port: int = 0,
         timeout: float = 10.0,
         verify_tls: bool = True,
+        fetch_client_times: bool = True,
         fetch_client_details: bool = False,
         debug: bool = False,
     ):
@@ -72,13 +73,15 @@ class Ts6WebQueryClient:
         self.server_port = server_port
         self.timeout = timeout
         self.verify_tls = verify_tls
+        self.fetch_client_times = fetch_client_times
         self.fetch_client_details = fetch_client_details
         self.debug = debug
 
     async def fetch_status(self) -> Ts6ServerStatus:
         serverinfo_records = await self._execute("serverinfo")
         channel_records = await self._execute("channellist")
-        client_records = await self._execute("clientlist")
+        client_options = ["times"] if self.fetch_client_times else []
+        client_records = await self._execute("clientlist", options=client_options)
 
         client_details: dict[str, dict[str, str]] = {}
         if self.fetch_client_details:
