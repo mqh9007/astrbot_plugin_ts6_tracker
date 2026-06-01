@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run tests
+        run: python -B -m unittest discover -s tests
+
+      - name: Build plugin archive
+        run: |
+          set -euo pipefail
+          plugin_name="astrbot_plugin_ts6_tracker"
+          staging_dir="dist/${plugin_name}"
+          mkdir -p "${staging_dir}"
+          rsync -av \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='__pycache__/' \
+            --exclude='*.pyc' \
+            --exclude='data/' \
+            --exclude='dist/' \
+            ./ "${staging_dir}/"
+          cd dist
+          zip -r "${plugin_name}-${GITHUB_REF_NAME}.zip" "${plugin_name}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/astrbot_plugin_ts6_tracker-${{ github.ref_name }}.zip
