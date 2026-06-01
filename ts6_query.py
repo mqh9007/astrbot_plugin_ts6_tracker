@@ -119,7 +119,7 @@ class Ts6WebQueryClient:
                     database_id=_first_value(client, detail, "client_database_id"),
                     unique_id=_first_value(client, detail, "client_unique_identifier"),
                     client_ip=_first_value(client, detail, "connection_client_ip"),
-                    connected_duration_seconds=_parse_connected_duration(detail),
+                    connected_duration_seconds=_parse_connected_duration(client, detail),
                     away=_first_value(client, detail, "client_away") == "1",
                 )
             )
@@ -249,9 +249,17 @@ class Ts6WebQueryClient:
         return records
 
 
-def _parse_connected_duration(detail: dict[str, str]) -> int:
-    value = detail.get("connection_connected_time", "0") or "0"
-    return max(0, _safe_int(value, 0) // 1000)
+def _parse_connected_duration(
+    primary: dict[str, str],
+    secondary: dict[str, str] | None = None,
+) -> int:
+    secondary = secondary or {}
+    for key in ("connection_connected_time", "client_connected_time"):
+        value = primary.get(key, "") or secondary.get(key, "")
+        if value:
+            return max(0, _safe_int(value, 0) // 1000)
+    value = primary.get("connection_duration", "") or secondary.get("connection_duration", "")
+    return max(0, _safe_int(value, 0))
 
 
 def _first_value(primary: dict[str, str], secondary: dict[str, str], key: str) -> str:

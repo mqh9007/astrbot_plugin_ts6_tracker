@@ -363,6 +363,7 @@ class Ts6TrackerPluginTests(unittest.TestCase):
                         "cid": "1",
                         "client_nickname": "tester",
                         "client_type": "0",
+                        "connection_connected_time": "1380000",
                     }
                 ]
             if command == "clientinfo":
@@ -374,7 +375,38 @@ class Ts6TrackerPluginTests(unittest.TestCase):
         status = asyncio.run(client.fetch_status())
 
         self.assertEqual(status.users[0].nickname, "tester")
+        self.assertEqual(status.users[0].connected_duration_seconds, 1380)
         self.assertNotIn("clientinfo", calls)
+
+    def test_ts6_status_query_accepts_clientlist_duration_seconds(self):
+        client = query_module.Ts6WebQueryClient(
+            host="127.0.0.1",
+            server_id=1,
+            api_key="secret",
+        )
+
+        async def fake_execute(command, params=None, options=None, use_server_id=True):
+            if command == "serverinfo":
+                return [{"virtualserver_name": "TS6", "virtualserver_port": "9987"}]
+            if command == "channellist":
+                return [{"cid": "1", "channel_name": "大厅"}]
+            if command == "clientlist":
+                return [
+                    {
+                        "clid": "351",
+                        "cid": "1",
+                        "client_nickname": "tester",
+                        "client_type": "0",
+                        "connection_duration": "1380",
+                    }
+                ]
+            return []
+
+        client._execute = fake_execute
+
+        status = asyncio.run(client.fetch_status())
+
+        self.assertEqual(status.users[0].connected_duration_seconds, 1380)
 
     def test_ts6_status_query_ignores_clientinfo_failures_when_enabled(self):
         client = query_module.Ts6WebQueryClient(
