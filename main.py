@@ -46,9 +46,9 @@ PLUGIN_NAME = "astrbot_plugin_ts6_tracker"
 
 @register(
     "ts6_tracker",
-    "moeneri",
+    "mqh",
     "拥有 TeamSpeak 6 在线状态查询、频道成员展示、上下线通知的功能。",
-    "1.0.1",
+    "1.0.2",
     "",
 )
 class Ts6TrackerPlugin(Star):
