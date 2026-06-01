@@ -74,11 +74,9 @@ class Ts6WebQueryClient:
         self.debug = debug
 
     async def fetch_status(self) -> Ts6ServerStatus:
-        serverinfo_records, channel_records, client_records = await asyncio.gather(
-            self._execute("serverinfo"),
-            self._execute("channellist"),
-            self._execute("clientlist", options=["uid", "away", "ip"]),
-        )
+        serverinfo_records = await self._execute("serverinfo")
+        channel_records = await self._execute("channellist")
+        client_records = await self._execute("clientlist", options=["uid", "away", "ip"])
 
         client_details: dict[str, dict[str, str]] = {}
         for client in client_records:

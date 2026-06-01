@@ -310,6 +310,38 @@ class Ts6TrackerPluginTests(unittest.TestCase):
 
         self.assertEqual(plugin._get_missing_required_fields(), ["WebQuery API Key"])
 
+    def test_ts6_status_query_uses_sequential_webquery_requests(self):
+        client = query_module.Ts6WebQueryClient(
+            host="127.0.0.1",
+            server_id=1,
+            api_key="secret",
+        )
+        calls = []
+
+        async def fake_execute(command, params=None, options=None, use_server_id=True):
+            calls.append((command, tuple(options or [])))
+            if command == "serverinfo":
+                return [{"virtualserver_name": "TS6", "virtualserver_port": "9987"}]
+            if command == "channellist":
+                return [{"cid": "1", "channel_name": "大厅"}]
+            if command == "clientlist":
+                return []
+            return []
+
+        client._execute = fake_execute
+
+        status = asyncio.run(client.fetch_status())
+
+        self.assertEqual(status.server_name, "TS6")
+        self.assertEqual(
+            calls,
+            [
+                ("serverinfo", ()),
+                ("channellist", ()),
+                ("clientlist", ("uid", "away", "ip")),
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
