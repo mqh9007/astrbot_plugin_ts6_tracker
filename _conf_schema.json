@@ -1,0 +1,97 @@
+{
+  "server_host": {
+    "type": "string",
+    "description": "TS6 服务器 IP 或域名",
+    "hint": "例如 ts.example.com 或 127.0.0.1"
+  },
+  "server_port": {
+    "type": "int",
+    "description": "TS6 语音服务器端口",
+    "hint": "用于显示；留空或 0 时会优先使用 serverinfo 返回的端口",
+    "default": 0
+  },
+  "virtual_server_id": {
+    "type": "int",
+    "description": "虚拟服务器 ID",
+    "hint": "WebQuery 路径中的 ID，例如 /1/serverinfo 就填 1",
+    "default": 1
+  },
+  "webquery_scheme": {
+    "type": "string",
+    "description": "WebQuery 协议",
+    "hint": "http 或 https；TS6 HTTP Query 默认是 http",
+    "default": "http"
+  },
+  "webquery_port": {
+    "type": "int",
+    "description": "WebQuery 端口",
+    "hint": "TS6 HTTP Query 默认 10080，HTTPS Query 默认 10443",
+    "default": 10080
+  },
+  "webquery_api_key": {
+    "type": "string",
+    "description": "WebQuery API Key",
+    "hint": "通过 TeamSpeak 查询命令 apikeyadd scope=manage lifetime=0 创建；请求会放在 x-api-key 头中",
+    "obvious_hint": true
+  },
+  "verify_tls": {
+    "type": "bool",
+    "description": "校验 HTTPS 证书",
+    "hint": "仅 webquery_scheme=https 时生效；自签证书可关闭",
+    "default": true
+  },
+  "enable_plain_text_trigger": {
+    "type": "bool",
+    "description": "允许不带 / 的纯文本触发",
+    "hint": "开启后，直接发送 ts、上号、人呢 也会触发查询",
+    "default": false
+  },
+  "show_online_duration_in_status": {
+    "type": "bool",
+    "description": "上号查询时显示在线时长",
+    "hint": "开启后，/ts、上号、人呢 的返回结果会显示为 test(23分钟) 这种格式",
+    "default": false
+  },
+  "enable_group_whitelist": {
+    "type": "bool",
+    "description": "开启群白名单",
+    "hint": "开启后，只有白名单内的群才可以触发插件指令；默认关闭时允许所有群",
+    "default": false
+  },
+  "group_whitelist": {
+    "type": "string",
+    "description": "群白名单",
+    "hint": "仅在开启群白名单后生效。请输入允许使用插件的 QQ 群号，支持一行一个，或用英文/中文逗号分隔"
+  },
+  "online_message_template": {
+    "type": "string",
+    "description": "进服提示模板",
+    "hint": "支持变量：{nickname}/{username}、{time}/{timestamp}/{start_time}/{online_time}、{total_users}/{online_count}、{online_list}。可直接使用 \\n 表示换行",
+    "default": "让我看看是谁还没上号 👀\\n🧾 昵称：{nickname}\\n🟢 上线时间：{time}\\n📣 {nickname} 进入了 TS 服务器\\n👥 当前在线人数：{total_users}\\n📜 在线列表：{online_list}"
+  },
+  "offline_message_template": {
+    "type": "string",
+    "description": "退服提示模板",
+    "hint": "支持变量：{nickname}/{username}、{time}/{timestamp}/{end_time}/{offline_time}、{start_time}、{duration}、{total_users}/{online_count}、{online_list}。可直接使用 \\n 表示换行",
+    "default": "📤 用户下线通知\\n🧾 昵称：{nickname}\\n🟢 上线时间：{start_time}\\n🔴 下线时间：{end_time}\\n⏱️ 在线时长：{duration}\\n👥 当前在线人数：{online_count}\\n📜 在线列表：{online_list}"
+  },
+  "enable_monitor": {
+    "type": "bool",
+    "description": "开启进入/离开监控",
+    "hint": "开启后插件会持续轮询 TS6 在线列表，并向已绑定的会话推送上线/下线通知",
+    "default": false
+  },
+  "monitor_interval_seconds": {
+    "type": "int",
+    "description": "监控轮询间隔秒数",
+    "hint": "默认 10 秒，代码也会强制不低于 5 秒。请勿设置过低，太频繁查询可能会被 TS6 服务器限流。",
+    "obvious_hint": true,
+    "default": 10
+  },
+  "debug": {
+    "type": "bool",
+    "description": "输出详细调试日志",
+    "hint": "开启后会在 AstrBot 日志中打印更详细的 TS6 查询过程",
+    "default": false
+  }
+}
